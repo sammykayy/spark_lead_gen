@@ -1,8 +1,8 @@
-"""Google Sheets as primary store + CSV download. Deduplicates by linkedin_url."""
+"""Google Sheets as primary store + CSV export. Deduplicates by linkedin_url."""
 import json
 import csv
 import io
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -15,13 +15,15 @@ SCOPES = [
 ]
 
 SALES_COLS = [
-    "Name", "Title", "School", "LinkedIn URL", "Email",
-    "Subject", "Email Body", "Approved", "Email Sent", "Date Sent",
+    "First Name", "Last Name", "Role", "Email", "LinkedIn",
+    "City", "Country", "Subject", "Email Body",
+    "Approved", "Email Sent", "Date Sent",
 ]
 
 CREATOR_COLS = [
-    "Name", "Title", "Domain", "Country", "LinkedIn URL",
-    "Subject", "Email Body", "Approved", "Email Sent", "Date Sent",
+    "First Name", "Last Name", "Specialty", "Email", "LinkedIn",
+    "Website", "City", "Country", "Subject", "Email Body",
+    "Approved", "Email Sent", "Date Sent",
 ]
 
 
@@ -43,7 +45,7 @@ def _sheet(name: str, cols: List[str]) -> gspread.Worksheet:
 
 def _existing_urls(ws: gspread.Worksheet) -> set:
     records = ws.get_all_records()
-    return {r.get("LinkedIn URL", "") for r in records}
+    return {r.get("LinkedIn", "") for r in records}
 
 
 # ── Sales ─────────────────────────────────────────────────────────────────────
@@ -64,8 +66,9 @@ def save_sales(leads: List[Dict]) -> int:
         if l.get("linkedin_url", "") in existing:
             continue
         ws.append_row([
-            l.get("name", ""), l.get("title", ""), l.get("school", ""),
-            l.get("linkedin_url", ""), l.get("email", ""),
+            l.get("first_name", ""), l.get("last_name", ""),
+            l.get("role", ""), l.get("email", ""),
+            l.get("linkedin_url", ""), l.get("city", ""), l.get("country", ""),
             l.get("subject", ""), l.get("email_body", ""),
             "", "", "",
         ])
@@ -79,11 +82,13 @@ def sales_to_csv(leads: List[Dict]) -> str:
     w.writeheader()
     for l in leads:
         w.writerow({
-            "Name": l.get("name", ""),
-            "Title": l.get("title", ""),
-            "School": l.get("school", ""),
-            "LinkedIn URL": l.get("linkedin_url", ""),
+            "First Name": l.get("first_name", ""),
+            "Last Name": l.get("last_name", ""),
+            "Role": l.get("role", ""),
             "Email": l.get("email", ""),
+            "LinkedIn": l.get("linkedin_url", ""),
+            "City": l.get("city", ""),
+            "Country": l.get("country", ""),
             "Subject": l.get("subject", ""),
             "Email Body": l.get("email_body", ""),
             "Approved": l.get("approved", ""),
@@ -111,9 +116,10 @@ def save_creator(leads: List[Dict]) -> int:
         if l.get("linkedin_url", "") in existing:
             continue
         ws.append_row([
-            l.get("name", ""), l.get("title", ""),
-            l.get("domain", ""), l.get("country", ""),
-            l.get("linkedin_url", ""),
+            l.get("first_name", ""), l.get("last_name", ""),
+            l.get("specialty", ""), l.get("email", ""),
+            l.get("linkedin_url", ""), l.get("website", ""),
+            l.get("city", ""), l.get("country", ""),
             l.get("subject", ""), l.get("email_body", ""),
             "", "", "",
         ])
@@ -127,11 +133,14 @@ def creator_to_csv(leads: List[Dict]) -> str:
     w.writeheader()
     for l in leads:
         w.writerow({
-            "Name": l.get("name", ""),
-            "Title": l.get("title", ""),
-            "Domain": l.get("domain", ""),
+            "First Name": l.get("first_name", ""),
+            "Last Name": l.get("last_name", ""),
+            "Specialty": l.get("specialty", ""),
+            "Email": l.get("email", ""),
+            "LinkedIn": l.get("linkedin_url", ""),
+            "Website": l.get("website", ""),
+            "City": l.get("city", ""),
             "Country": l.get("country", ""),
-            "LinkedIn URL": l.get("linkedin_url", ""),
             "Subject": l.get("subject", ""),
             "Email Body": l.get("email_body", ""),
             "Approved": l.get("approved", ""),

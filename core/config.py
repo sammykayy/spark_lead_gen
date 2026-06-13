@@ -27,31 +27,67 @@ def get_google_sa_json() -> str:
     return _secret("GOOGLE_SERVICE_ACCOUNT_JSON")
 
 
-SALES_SHEET_NAME = "EduSpark Sales Leads MASTER"
+SALES_SHEET_NAME   = "EduSpark Sales Leads MASTER"
 CREATOR_SHEET_NAME = "EduSpark Creator Leads MASTER"
+
+SALES_ROLES = [
+    "Principal",
+    "Vice Principal",
+    "Head of School",
+    "Deputy Head of School",
+    "IB Coordinator",
+    "PYP Coordinator",
+    "MYP Coordinator",
+    "DP Coordinator",
+    "Teaching & Learning Coordinator",
+    "Director of Learning",
+    "Curriculum Coordinator",
+    "Academic Coordinator",
+    "Professional Development Lead",
+    "Director of Studies",
+    "Admissions Director",
+    "Other",
+]
+
+COURSE_CATEGORIES = [
+    "Pedagogy & Teaching Practice",
+    "Curriculum & Assessment",
+    "Leadership & School Management",
+    "Wellbeing & Mental Health",
+    "Inclusion & Special Needs (SEN/SEND)",
+    "International Baccalaureate (IB)",
+    "Early Childhood Education",
+    "Technology & EdTech",
+    "Social-Emotional Learning (SEL)",
+    "Diversity, Equity & Inclusion",
+    "Language & Literacy",
+    "STEM / STEAM",
+    "Arts Education",
+    "Physical Education & Sport",
+    "Safeguarding & Child Protection",
+    "Teacher Professional Development",
+    "Other",
+]
 
 LEARNING_DOMAINS = [
     "Mathematics",
     "Science",
-    "Literacy / English Language Arts",
+    "English / Literacy",
     "Inquiry-Based Learning",
     "Universal Design for Learning (UDL)",
-    "Leadership & School Management",
-    "Safeguarding & Child Protection",
-    "Social-Emotional Learning (SEL)",
-    "STEM / STEAM",
-    "Early Childhood Education",
-    "Special Educational Needs (SEN / SEND)",
-    "Technology & EdTech",
-    "International Baccalaureate (IB)",
+    "Project-Based Learning (PBL)",
+    "Differentiated Instruction",
+    "Assessment for Learning",
+    "School Leadership",
+    "Coaching & Mentoring",
+    "Safeguarding",
+    "Wellbeing",
+    "EdTech Integration",
+    "Early Years",
+    "SEN / SEND",
+    "EAL / Language Acquisition",
+    "IB Framework",
     "Curriculum Design",
-    "Assessment & Feedback",
-    "Teacher Professional Development",
-    "Wellbeing & Mental Health",
-    "Diversity, Equity & Inclusion",
-    "Language Acquisition / EAL",
-    "Physical Education & Sport",
-    "Arts Education",
     "Other",
 ]
 
@@ -76,20 +112,12 @@ COUNTRIES = [
     "Vietnam",
     "Indonesia",
     "Philippines",
-    "Other",
-]
-
-SALES_PERSONAS = [
-    "Principal / Head of School",
-    "Vice Principal / Deputy Head",
-    "IB Coordinator",
-    "PYP Coordinator",
-    "MYP Coordinator",
-    "DP Coordinator",
-    "Teaching & Learning Coordinator",
-    "Director of Learning",
-    "Curriculum Coordinator",
-    "Academic Coordinator",
-    "Professional Development Lead",
+    "Japan",
+    "China",
+    "South Korea",
+    "Turkey",
+    "Egypt",
+    "Kenya",
+    "Nigeria",
     "Other",
 ]
