@@ -70,14 +70,8 @@ def _format_lead_sales(l: Dict, i: int) -> str:
         f"  linkedin_url: {l.get('linkedin_url', '')}",
         f"  name: {l.get('name', '')}",
         f"  title: {l.get('title', '')}",
-        f"  school: {l.get('school', '')}",
+        f"  country: {l.get('country', '')}",
     ]
-    posts = l.get("posts", [])
-    if posts:
-        lines.append("  recent_posts:")
-        for j, p in enumerate(posts[:2], 1):
-            excerpt = p[:600].replace("\n", " ")
-            lines.append(f"    post_{j}: \"{excerpt}\"")
     return "\n".join(lines)
 
 
@@ -88,7 +82,8 @@ def _format_lead_creator(l: Dict, i: int) -> str:
         f"  name: {l.get('name', '')}",
         f"  title: {l.get('title', '')}",
         f"  domain: {l.get('domain', '')}",
-        f"  country: {l.get('country', '')}",
+        f"  specialty: {l.get('specialty', '')}",
+        f"  why_a_good_fit: {l.get('notes', '')}",
     ]
     posts = l.get("posts", [])
     if posts:

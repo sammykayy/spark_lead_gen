@@ -123,19 +123,14 @@ if mode == "Sales — School Leaders":
             with st.form("add_sales_lead", clear_on_submit=True):
                 st.markdown("**Profile details**")
                 name = st.text_input("Full name *", placeholder="Jane Smith")
+                linkedin_url = st.text_input("LinkedIn URL *", placeholder="https://www.linkedin.com/in/...")
                 col_a, col_b = st.columns(2)
                 with col_a:
-                    first = st.text_input("First name *", placeholder="Jane")
+                    role = st.selectbox("Role *", SALES_PERSONAS)
+                    custom_role = st.text_input("Custom role (if Other)", "")
                 with col_b:
-                    last = st.text_input("Last name *", placeholder="Smith")
-                title = st.selectbox("Role / Title *", SALES_PERSONAS)
-                custom_title = st.text_input("Custom title (if Other)", "")
-                school = st.text_input("School name *", placeholder="International School of...")
-                linkedin_url = st.text_input("LinkedIn URL *", placeholder="https://www.linkedin.com/in/...")
-
-                st.markdown("**Recent posts** (paste up to 2 — helps personalise the email)")
-                post1 = st.text_area("Post 1", height=80, placeholder="Paste post text here…")
-                post2 = st.text_area("Post 2", height=80, placeholder="Paste post text here…")
+                    country_choice = st.selectbox("Country *", COUNTRIES)
+                    custom_country = st.text_input("Custom country (if Other)", "")
 
                 add_btn = st.form_submit_button("Add Lead", type="primary")
 
@@ -143,20 +138,20 @@ if mode == "Sales — School Leaders":
                 if not name or not linkedin_url:
                     st.error("Name and LinkedIn URL are required.")
                 else:
-                    final_title = custom_title.strip() if title == "Other" else title
-                    posts = [p.strip() for p in [post1, post2] if p.strip()]
+                    final_role = custom_role.strip() if role == "Other" else role
+                    final_country = custom_country.strip() if country_choice == "Other" else country_choice
+                    parts = name.strip().split()
                     existing_urls = [l["linkedin_url"] for l in st.session_state.sales_leads]
                     if linkedin_url.strip() in existing_urls:
                         st.warning("This LinkedIn URL is already in your list.")
                     else:
                         st.session_state.sales_leads.append({
                             "name": name.strip(),
-                            "first_name": first.strip() or name.split()[0],
-                            "last_name": last.strip() or " ".join(name.split()[1:]),
-                            "title": final_title,
-                            "school": school.strip(),
+                            "first_name": parts[0] if parts else "",
+                            "last_name": " ".join(parts[1:]) if len(parts) > 1 else "",
+                            "title": final_role,
+                            "country": final_country,
                             "linkedin_url": linkedin_url.strip(),
-                            "posts": posts,
                             "email": "",
                             "subject": "",
                             "email_body": "",
@@ -170,7 +165,7 @@ if mode == "Sales — School Leaders":
                 with cols[0]:
                     email_badge = f" · {l['email']}" if l.get("email") else ""
                     wrote_badge = " ✅" if l.get("email_body") else ""
-                    st.markdown(f"**{l['name']}** — {l.get('title','')} @ {l.get('school','')}{email_badge}{wrote_badge}")
+                    st.markdown(f"**{l['name']}** — {l.get('title','')} · {l.get('country','')}{email_badge}{wrote_badge}")
                 with cols[1]:
                     if st.button("✕", key=f"del_s_{i}"):
                         st.session_state.sales_leads.pop(i)
@@ -178,7 +173,7 @@ if mode == "Sales — School Leaders":
 
         st.markdown("---")
         st.markdown("**Or import from CSV**")
-        uploaded = st.file_uploader("Upload CSV (columns: name, first_name, last_name, title, school, linkedin_url)", type="csv", key="sales_csv_upload")
+        uploaded = st.file_uploader("Upload CSV (columns: name, title, country, linkedin_url)", type="csv", key="sales_csv_upload")
         if uploaded:
             import csv as _csv
             import io as _io
@@ -188,14 +183,15 @@ if mode == "Sales — School Leaders":
             for row in reader:
                 url = row.get("linkedin_url", "").strip()
                 if url and url not in existing_urls:
+                    n = row.get("name", "")
+                    parts = n.split()
                     st.session_state.sales_leads.append({
-                        "name": row.get("name", ""),
-                        "first_name": row.get("first_name", ""),
-                        "last_name": row.get("last_name", ""),
+                        "name": n,
+                        "first_name": parts[0] if parts else "",
+                        "last_name": " ".join(parts[1:]) if len(parts) > 1 else "",
                         "title": row.get("title", ""),
-                        "school": row.get("school", ""),
+                        "country": row.get("country", ""),
                         "linkedin_url": url,
-                        "posts": [],
                         "email": "",
                         "subject": "",
                         "email_body": "",
@@ -304,7 +300,7 @@ if mode == "Sales — School Leaders":
 <div class="{card_class}">
   <div class="lead-name">{lead.get('name','')}</div>
   <div class="lead-meta">
-    {lead.get('title','')} &nbsp;·&nbsp; {lead.get('school','')} &nbsp;·&nbsp;
+    {lead.get('title','')} &nbsp;·&nbsp; {lead.get('country','')} &nbsp;·&nbsp;
     <a href="{lead.get('linkedin_url','')}" target="_blank">LinkedIn ↗</a>
     {(' &nbsp;·&nbsp; ' + lead.get('email','')) if lead.get('email') else ''}
   </div>
@@ -371,12 +367,17 @@ else:
                 col_a, col_b = st.columns(2)
                 with col_a:
                     domain_choice = st.selectbox("Learning Domain *", LEARNING_DOMAINS)
-                    custom_domain = st.text_input("Custom domain", placeholder="e.g. Robotics")
+                    custom_domain = st.text_input("Custom domain (if Other)", placeholder="e.g. Robotics")
                 with col_b:
-                    country_choice = st.selectbox("Country *", COUNTRIES)
-                    custom_country = st.text_input("Custom country", placeholder="e.g. Japan")
+                    specialty = st.text_input("Specialty *", placeholder="e.g. Inquiry-based Maths, PBL, Differentiated Instruction…")
 
-                st.markdown("**Recent posts** (paste up to 3 — these are what Claude uses to personalise the email)")
+                notes = st.text_area(
+                    "Why are they a good fit? *",
+                    height=90,
+                    placeholder="e.g. Posts regularly about classroom strategies, has 8k followers, runs workshops for teachers, wrote a book on assessment…",
+                )
+
+                st.markdown("**Recent posts** (paste up to 3 — Claude uses these to write the email)")
                 post1 = st.text_area("Post 1 *", height=90, placeholder="Paste their most interesting recent post…")
                 post2 = st.text_area("Post 2", height=80, placeholder="Paste another post…")
                 post3 = st.text_area("Post 3", height=80, placeholder="One more…")
@@ -388,7 +389,6 @@ else:
                     st.error("Name, LinkedIn URL, and at least one post are required.")
                 else:
                     domain = custom_domain.strip() if domain_choice == "Other" else domain_choice
-                    country = custom_country.strip() if country_choice == "Other" else country_choice
                     posts = [p.strip() for p in [post1, post2, post3] if p.strip()]
                     existing_urls = {l["linkedin_url"] for l in st.session_state.creator_leads}
                     if linkedin_url.strip() in existing_urls:
@@ -398,7 +398,8 @@ else:
                             "name": name.strip(),
                             "title": title.strip(),
                             "domain": domain,
-                            "country": country,
+                            "specialty": specialty.strip(),
+                            "notes": notes.strip(),
                             "linkedin_url": linkedin_url.strip(),
                             "posts": posts,
                             "subject": "",
@@ -413,7 +414,7 @@ else:
                 with cols[0]:
                     wrote_badge = " ✅" if l.get("email_body") else ""
                     st.markdown(
-                        f"**{l['name']}** — {l.get('domain','')} · {l.get('country','')}"
+                        f"**{l['name']}** — {l.get('domain','')} · {l.get('specialty','')}"
                         f" · {len(l.get('posts',[]))} posts{wrote_badge}"
                     )
                 with cols[1]:
@@ -424,7 +425,7 @@ else:
         st.markdown("---")
         st.markdown("**Or import from CSV**")
         uploaded = st.file_uploader(
-            "Upload CSV (columns: name, title, domain, country, linkedin_url, post1, post2, post3)",
+            "Upload CSV (columns: name, title, domain, specialty, notes, linkedin_url, post1, post2, post3)",
             type="csv", key="creator_csv_upload",
         )
         if uploaded:
@@ -441,7 +442,8 @@ else:
                         "name": row.get("name", ""),
                         "title": row.get("title", ""),
                         "domain": row.get("domain", ""),
-                        "country": row.get("country", ""),
+                        "specialty": row.get("specialty", ""),
+                        "notes": row.get("notes", ""),
                         "linkedin_url": url,
                         "posts": posts,
                         "subject": "",
@@ -508,10 +510,10 @@ else:
 <div class="lead-card creator">
   <div class="lead-name">{lead.get('name','')}</div>
   <div class="lead-meta">
-    {lead.get('title','')} &nbsp;·&nbsp; {lead.get('domain','')} &nbsp;·&nbsp; {lead.get('country','')}
+    {lead.get('title','')} &nbsp;·&nbsp; {lead.get('domain','')} &nbsp;·&nbsp; {lead.get('specialty','')}
     &nbsp;·&nbsp; <a href="{lead.get('linkedin_url','')}" target="_blank">LinkedIn ↗</a>
-    &nbsp;·&nbsp; {len(lead.get('posts',[]))} posts
   </div>
+  {('<div class="lead-meta" style="font-style:italic">' + lead.get('notes','') + '</div>') if lead.get('notes') else ''}
   {'<div class="subj">📧 ' + lead.get('subject','') + '</div>' if lead.get('subject') else ''}
   {'<div class="body-text">' + lead.get('email_body','')[:600] + ('…' if len(lead.get('email_body','')) > 600 else '') + '</div>' if lead.get('email_body') else '<div style="color:#9e9e9e;font-size:12px">No email written yet</div>'}
 </div>""", unsafe_allow_html=True)
