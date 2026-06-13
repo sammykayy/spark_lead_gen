@@ -10,14 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from core.config import (
     SALES_ROLES, COURSE_CATEGORIES, LEARNING_DOMAINS, COUNTRIES,
-    get_surfe_key, get_google_sa_json,
+    get_surfe_key, get_anthropic_key, get_google_sa_json,
 )
 from core.search_builder import (
     sales_linkedin_url, sales_google_queries, sales_google_url,
     creator_search_prompt,
 )
-from core.prompt_builder import build_sales_prompt, build_creator_prompt
-from core.email_parser import parse_claude_response, merge_emails_into_leads
+from core.email_writer import generate_sales_emails, generate_creator_emails
 
 # ── Page config ───────────────────────────────────────────────────────────────
 
@@ -80,12 +79,14 @@ with st.sidebar:
     st.session_state.mode = mode
     st.markdown("---")
 
-    has_surfe  = bool(get_surfe_key())
-    has_sheets = bool(get_google_sa_json())
+    has_surfe     = bool(get_surfe_key())
+    has_anthropic = bool(get_anthropic_key())
+    has_sheets    = bool(get_google_sa_json())
 
     st.markdown("**Integrations**")
-    st.markdown(f"{'✅' if has_surfe  else '❌'} Surfe {'connected' if has_surfe else '— add key'}")
-    st.markdown(f"{'✅' if has_sheets else '⚠️'} Google Sheets {'connected' if has_sheets else '— optional'}")
+    st.markdown(f"{'✅' if has_surfe     else '❌'} Surfe {'connected' if has_surfe else '— add key'}")
+    st.markdown(f"{'✅' if has_anthropic else '❌'} Claude API {'connected' if has_anthropic else '— add key'}")
+    st.markdown(f"{'✅' if has_sheets    else '⚠️'} Google Sheets {'connected' if has_sheets else '— optional'}")
     st.markdown("---")
 
     if mode == "Sales":
@@ -265,23 +266,24 @@ if mode == "Sales":
 
         st.markdown("### Generate outreach emails")
 
-        if not ready:
-            st.info("Enrich emails in the 'Enrich Emails' tab first.")
+        if not has_anthropic:
+            st.error("Claude API key not configured. Add `ANTHROPIC_API_KEY` to your Streamlit secrets.")
+        elif not ready:
+            st.info("Enrich emails in the 'Enrich Emails' tab first — only leads with confirmed emails get outreach written.")
         else:
-            st.markdown(f"**{len(ready)} leads with confirmed emails.**")
-            st.markdown('<div class="step-header">Step 1 — Copy this prompt and paste it into Claude Teams</div>', unsafe_allow_html=True)
-            prompt = build_sales_prompt(ready)
-            st.code(prompt, language=None)
-
-            st.markdown('<div class="step-header">Step 2 — Paste Claude\'s response here</div>', unsafe_allow_html=True)
-            resp = st.text_area("", height=180, placeholder='[{"linkedin_url":"...","subject":"...","email":"..."}]', key="s_resp")
-            if st.button("Apply Emails", type="primary", key="s_apply"):
-                emails, err = parse_claude_response(resp)
-                if err:
-                    st.error(err)
-                else:
-                    st.session_state.sales_leads = merge_emails_into_leads(st.session_state.sales_leads, emails)
-                    st.success(f"Applied {len(emails)} emails.")
+            st.markdown(f"**{len(ready)} leads ready.** Click below to generate all emails at once.")
+            if st.button("✨ Generate Emails", type="primary", key="s_gen"):
+                with st.spinner(f"Writing {len(ready)} personalised emails…"):
+                    try:
+                        results = generate_sales_emails(ready)
+                        for lead in st.session_state.sales_leads:
+                            match = next((r for r in results if r.get("linkedin_url") == lead["linkedin_url"]), None)
+                            if match:
+                                lead["subject"]    = match.get("subject", "")
+                                lead["email_body"] = match.get("email", "")
+                        st.success(f"Done — {len(results)} emails written. See them below.")
+                    except Exception as e:
+                        st.error(f"Claude API error: {e}")
 
         st.markdown("---")
         st.markdown("### Review & export")
@@ -498,23 +500,24 @@ else:
 
         st.markdown("### Generate creator invitation emails")
 
-        if not ready:
+        if not has_anthropic:
+            st.error("Claude API key not configured. Add `ANTHROPIC_API_KEY` to your Streamlit secrets.")
+        elif not ready:
             st.info("Add creators with at least one post in the 'Add Profiles' tab.")
         else:
-            st.markdown(f"**{len(ready)} creators ready.**")
-            st.markdown('<div class="step-header">Step 1 — Copy this prompt and paste it into Claude Teams</div>', unsafe_allow_html=True)
-            prompt = build_creator_prompt(ready)
-            st.code(prompt, language=None)
-
-            st.markdown('<div class="step-header">Step 2 — Paste Claude\'s response here</div>', unsafe_allow_html=True)
-            resp = st.text_area("", height=180, placeholder='[{"linkedin_url":"...","subject":"...","email":"..."}]', key="c_resp")
-            if st.button("Apply Emails", type="primary", key="c_apply"):
-                emails, err = parse_claude_response(resp)
-                if err:
-                    st.error(err)
-                else:
-                    st.session_state.creator_leads = merge_emails_into_leads(st.session_state.creator_leads, emails)
-                    st.success(f"Applied {len(emails)} emails.")
+            st.markdown(f"**{len(ready)} creators ready.** Click below to generate all invitation emails at once.")
+            if st.button("✨ Generate Emails", type="primary", key="c_gen"):
+                with st.spinner(f"Writing {len(ready)} personalised creator invitations…"):
+                    try:
+                        results = generate_creator_emails(ready)
+                        for lead in st.session_state.creator_leads:
+                            match = next((r for r in results if r.get("linkedin_url") == lead["linkedin_url"]), None)
+                            if match:
+                                lead["subject"]    = match.get("subject", "")
+                                lead["email_body"] = match.get("email", "")
+                        st.success(f"Done — {len(results)} emails written. See them below.")
+                    except Exception as e:
+                        st.error(f"Claude API error: {e}")
 
         st.markdown("---")
         st.markdown("### Review & export")

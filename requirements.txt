@@ -1,4 +1,5 @@
 streamlit>=1.35
+anthropic>=0.30
 requests>=2.31
 gspread>=6.0
 google-auth>=2.28

@@ -23,6 +23,9 @@ except ImportError:
 def get_surfe_key() -> str:
     return _secret("SURFE_API_KEY")
 
+def get_anthropic_key() -> str:
+    return _secret("ANTHROPIC_API_KEY")
+
 def get_google_sa_json() -> str:
     return _secret("GOOGLE_SERVICE_ACCOUNT_JSON")
 
